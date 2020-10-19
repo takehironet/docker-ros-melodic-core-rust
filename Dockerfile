@@ -1,6 +1,6 @@
 FROM ros:melodic-ros-core
 
-ENV RUST_VERSION=1.42.0
+ENV RUST_VERSION=1.47.0
 ENV RUST_ARCH=x86_64
 
 RUN apt-get update && apt-get install -y curl && curl -L https://static.rust-lang.org/dist/rust-"${RUST_VERSION}"-"${RUST_ARCH}"-unknown-linux-gnu.tar.gz | \
