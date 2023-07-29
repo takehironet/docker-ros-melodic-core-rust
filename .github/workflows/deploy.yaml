@@ -1,0 +1,48 @@
+name: Docker image deployment
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/rust-ros-core
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        rosdistro: [melodic, noetic]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set Env
+        run: echo "CURRENT_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+      - name: Login to the registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            prefix=${{ matrix.rosdistro }}-,onlatest=true
+            suffix=-${{ env.CURRENT_DATE }},onlatest=false
+      - name: Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./${{ matrix.rosdistro }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
